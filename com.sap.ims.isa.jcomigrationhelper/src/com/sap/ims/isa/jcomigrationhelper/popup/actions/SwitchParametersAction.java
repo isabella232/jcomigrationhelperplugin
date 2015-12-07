@@ -16,6 +16,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -46,6 +47,11 @@ public class SwitchParametersAction implements IObjectActionDelegate {
     @SuppressWarnings("unchecked")
     @Override
     public void run(IAction action) {
+        TreeSelection selection = JCoMarkerFactory.getTreeSelection();
+        if (selection != null) {
+            System.out.println("Here is my selection!");
+            return;
+        }
         boolean switchNotDone = true;
         JavaVariableOccurrence occurrences = JavaEditorUtils.getJavaVariableOccurrence(null);
         MultiTextEdit multiTextEdit = new MultiTextEdit();

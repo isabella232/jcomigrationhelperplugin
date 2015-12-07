@@ -46,7 +46,7 @@
 				class="com.sap.ims.isa.jcomigrationhelper.popup.actions.SwitchParametersAction"
 				enablesFor="1" id="com.sap.ims.isa.jcomigrationhelper.switchParametersAction"
 				label="%actions_switch_parameter_label" menubarPath="additions"
-				icon="icons/action_icon.gif">
+				icon="icons/marker_candidate.gif">
 			</action>
 		</objectContribution>
 	</extension>
@@ -96,6 +96,9 @@
 			verticalRulerPreferenceValue="true" textStylePreferenceKey="clstyle"
 			textStylePreferenceValue="BOX">
 		</specification>
+	</extension>
+	<extension point="org.eclipse.ui.editors.markerAnnotationSpecification"
+			   id="com.sap.ims.isa.jcomigrationhelper.annotation.spec.done">
 		<specification annotationType="com.sap.ims.isa.jcomigrationhelper.annotation.done"
 			label="%annotation_candidate_done" icon="icons/marker_ok.gif"
 			symbolicIcon="info" overviewRulerPreferenceKey="clruler"
@@ -169,6 +172,11 @@
 				class="com.sap.ims.isa.jcomigrationhelper.imports.OrganizeImportsAndVariables"
 				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file/refactoring"
 				id="com.sap.ims.isa.jcomigrationhelper.editor.imports.file">
+			</action>
+			<action label="%actions_switch_parameter_for_selection_label"
+				class="com.sap.ims.isa.jcomigrationhelper.popup.actions.SwitchParametersAction"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file/refactoring"
+				id="com.sap.ims.isa.jcomigrationhelper.switch.file">
 			</action>
 		</objectContribution>
 		
