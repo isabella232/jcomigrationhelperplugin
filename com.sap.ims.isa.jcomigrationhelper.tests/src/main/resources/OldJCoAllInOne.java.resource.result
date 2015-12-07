@@ -1,0 +1,53 @@
+package com.sap.ims.isa.tests.jcomigration.imports;
+
+import com.sap.conn.jco.*;
+
+
+public class OldJCoAllInOne {
+
+    private com.sap.conn.jco.JCoFunction variantReadData;
+    private JCoTable table;
+
+    public static void simpleCall(com.sap.conn.jco.JCoFunction func, JCoTable table) throws Exception {
+		try {
+
+			JCoFunction funcInst = new JCoFunction();
+			
+			// now get repository infos about the function
+			JCoFunction variantReadData = connection.getJCoFunction("SOME_FM");
+
+			// getting import parameter
+			com.sap.conn.jco.JCoParameterList importParams = variantReadData.getImportParameterList();
+
+			// setting the id of the attribute set
+			importParams.setValue("value_1", "NAME_1");
+			importParams.setValue("value_2", "NAME_2");
+
+			// call the function
+			connection.execute(variantReadData);
+
+			// get the output parameter
+			JCoParameterList exportParams = variantReadData.getExportParameterList();
+
+			String returnCode = exportParams.getString("RETURNCODE");
+
+		} catch (JCoException | JCoException ex) {
+			ex.printStacktrace();
+		}
+		
+		try {
+		    throw new JCoException();
+		} catch (com.sap.conn.jco.JCoException ex) {
+		    ex.printStacktrace();
+		}
+	}
+    public JCoParameterList simpleCall(JCoFunction func) throws JCoException {
+        return (JCoParameterList) null;
+    }
+    public com.sap.conn.jco.JCoParameterList simpleCallFqn(com.sap.conn.jco.JCoFunction func) throws JCoException {
+    	return (com.sap.conn.jco.JCoParameterList) null;
+    }
+    public com.sap.conn.jco.JCoParameterList simpleCallNoException(com.sap.conn.jco.JCoFunction func) {
+    	return (com.sap.conn.jco.JCoParameterList) null;
+    }
+}
