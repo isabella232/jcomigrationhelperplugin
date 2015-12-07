@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<!-- marker definition -->
+	<extension id="com.sap.ims.isa.jcomigrationhelper.marker" point="org.eclipse.core.resources.markers"
+			   name="%marker_name">
+		<super type="org.eclipse.core.resources.marker" />
+		<persistent value="true" />
+		<attribute name="description" />
+		<super type="org.eclipse.core.resources.textmarker" />
+	</extension>
+	
+	<extension id="com.sap.ims.isa.jcomigrationhelper.marker.done" point="org.eclipse.core.resources.markers"
+			   name="%marker_name_done">
+		<super type="org.eclipse.core.resources.marker" />
+		<persistent value="true" />
+		<attribute name="description" />
+		<super type="org.eclipse.core.resources.textmarker" />
+	</extension>
+
+	<!-- the menu for the pop ups -->
+	<!-- the pop up menu for the switch of parameters -->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.localvariable"
+							objectClass="org.eclipse.ui.IEditorInput" nameFilter="*.java">
+			<menu id="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor"
+				label="%menu_name" path="additions">
+				<separator name="refactoring" />
+			</menu>
+		</objectContribution>
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.marker.counter.files"
+							objectClass="org.eclipse.jdt.core.IOpenable">
+			<menu id="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file"
+				label="%menu_name" path="additions">
+				<separator name="refactoring" />
+			</menu>
+		</objectContribution>
+	</extension>
+
+	<!-- the pop up menu for the switch of parameters -->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.localvariable.switch"
+							objectClass="org.eclipse.ui.IEditorInput" nameFilter="*.java">
+			<action
+				definitionId="com.sap.ims.isa.jcomigrationhelper.switchParametersAction.definition"
+				class="com.sap.ims.isa.jcomigrationhelper.popup.actions.SwitchParametersAction"
+				enablesFor="1" id="com.sap.ims.isa.jcomigrationhelper.switchParametersAction"
+				label="%actions_switch_parameter_label" menubarPath="additions"
+				icon="icons/action_icon.gif">
+			</action>
+		</objectContribution>
+	</extension>
+
+	<!-- the pop up menus to count the markers for the enablement -->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.marker.counter.files"
+							objectClass="org.eclipse.jdt.core.IOpenable">
+			<action label="%actions_count_markers"
+				class="com.sap.ims.isa.jcomigrationhelper.markers.CountJCoMarkersForFiles"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file/refactoring"
+				id="com.sap.ims.isa.jcomigrationhelper.marker.counter.file">
+			</action>
+		</objectContribution>
+
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.localvariable"
+							objectClass="org.eclipse.ui.IEditorInput" nameFilter="*.java">
+			<action class="com.sap.ims.isa.jcomigrationhelper.markers.CreateJCoMarkers"
+				id="com.sap.ims.isa.jcomigrationhelper.marker.create" label="%actions_marker_create"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring">
+			</action>
+			<action class="com.sap.ims.isa.jcomigrationhelper.markers.RemoveJCoMarkers"
+				id="com.sap.ims.isa.jcomigrationhelper.marker.remove" label="%actions_marker_remove"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring">
+			</action>
+		</objectContribution>
+	</extension>
+
+
+	<!-- Link marker with annotation -->
+	<extension point="org.eclipse.ui.editors.annotationTypes">
+		<type markerSeverity="0" super="org.eclipse.ui.workbench.texteditor.info"
+			name="com.sap.ims.isa.jcomigrationhelper.annotation" markerType="com.sap.ims.isa.jcomigrationhelper.marker" />
+		<type markerSeverity="0" super="org.eclipse.ui.workbench.texteditor.info"
+			name="com.sap.ims.isa.jcomigrationhelper.annotation.done" markerType="com.sap.ims.isa.jcomigrationhelper.marker.done" />
+	</extension>
+
+	<!-- add the icon for the marker -->
+	<extension point="org.eclipse.ui.editors.markerAnnotationSpecification"
+			   id="com.sap.ims.isa.jcomigrationhelper.annotation.spec">
+		<specification annotationType="com.sap.ims.isa.jcomigrationhelper.annotation"
+			label="%annotation_candidate" icon="icons/marker_candidate.gif"
+			symbolicIcon="info" overviewRulerPreferenceKey="clruler"
+			overviewRulerPreferenceValue="true" colorPreferenceKey="clcolor"
+			colorPreferenceValue="255,128,0" textPreferenceKey="cltext"
+			textPreferenceValue="true" verticalRulerPreferenceKey="clvertical"
+			verticalRulerPreferenceValue="true" textStylePreferenceKey="clstyle"
+			textStylePreferenceValue="BOX">
+		</specification>
+		<specification annotationType="com.sap.ims.isa.jcomigrationhelper.annotation.done"
+			label="%annotation_candidate_done" icon="icons/marker_ok.gif"
+			symbolicIcon="info" overviewRulerPreferenceKey="clruler"
+			overviewRulerPreferenceValue="true" colorPreferenceKey="clcolor"
+			colorPreferenceValue="128,255,0" textPreferenceKey="cltext"
+			textPreferenceValue="true" verticalRulerPreferenceKey="clvertical"
+			verticalRulerPreferenceValue="true" textStylePreferenceKey="clstyle"
+			textStylePreferenceValue="BOX">
+		</specification>
+	</extension>
+
+	<!-- define the marker updater -->
+	<extension point="org.eclipse.ui.editors.markerUpdaters">
+		<updater id="com.sap.ims.isa.jcomigrationhelper.marker.updater"
+			class="com.sap.ims.isa.jcomigrationhelper.markers.JCoMarkUpdater"
+			markerType="com.sap.ims.isa.jcomigrationhelper.marker" />
+		<updater id="com.sap.ims.isa.jcomigrationhelper.marker.updater.done"
+			class="com.sap.ims.isa.jcomigrationhelper.markers.JCoMarkUpdater"
+			markerType="com.sap.ims.isa.jcomigrationhelper.marker.done" />
+	</extension>
+
+	<extension point="org.eclipse.ui.ide.markerImageProviders">
+		<imageprovider markertype="org.eclipse.core.resources.taskmarker"
+			icon="icons/marker_candidate.gif" id="com.sap.ims.isa.jcomigrationhelper.marker">
+		</imageprovider>
+		<imageprovider markertype="org.eclipse.core.resources.taskmarker"
+			icon="icons/marker_ok.gif" id="com.sap.ims.isa.jcomigrationhelper.marker.done">
+		</imageprovider>
+	</extension>
+
+	<!-- ruler actions -->
+	<extension point="org.eclipse.ui.popupMenus">
+		<viewerContribution targetID="#CompilationUnitRulerContext"
+							id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.actions">
+			<action label="%marker_remove"
+				class="com.sap.ims.isa.jcomigrationhelper.markers.ruler.JCoMarkerAction"
+				tooltip="%actions_marker_remove" menubarPath="additions"
+				id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.popup.remove">
+			</action>
+		</viewerContribution>
+		<viewerContribution targetID="#RulerContext"
+							id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.context.actions">
+			<action label="%marker_remove"
+				class="com.sap.ims.isa.jcomigrationhelper.markers.ruler.JCoMarkerAction"
+				tooltip="%actions_marker_remove" menubarPath="additions"
+				id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.remove">
+			</action>
+		</viewerContribution>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution targetID="org.eclipse.jdt.ui.CompilationUnitEditor"
+							id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.editor.actions">
+			<action label="%marker_remove"
+				class="com.sap.ims.isa.jcomigrationhelper.markers.ruler.JCoMarkerAction"
+				tooltip="%actions_marker_remove" actionID="RulerDoubleClick"
+				id="com.sap.ims.isa.jcomigrationhelper.markers.ruler.remove">
+			</action>
+		</editorContribution>
+	</extension>
+
+	<!-- pop up menu for project and generate markers -->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.marker.generator.files"
+							objectClass="org.eclipse.jdt.core.IOpenable">
+			<action label="%actions_marker_generate_label"
+				class="com.sap.ims.isa.jcomigrationhelper.markers.GenerateJCoMarkers"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file/refactoring"
+				id="com.sap.ims.isa.jcomigrationhelper.marker.generator.file">
+			</action>
+			<action label="%actions_import_organizer_label"
+				class="com.sap.ims.isa.jcomigrationhelper.imports.OrganizeImportsAndVariables"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.file/refactoring"
+				id="com.sap.ims.isa.jcomigrationhelper.editor.imports.file">
+			</action>
+		</objectContribution>
+		
+		<objectContribution id="com.sap.ims.isa.jcomigrationhelper.marker.generator.openeditor"
+							objectClass="org.eclipse.ui.IEditorInput" nameFilter="*.java">
+			<action class="com.sap.ims.isa.jcomigrationhelper.markers.GenerateJCoMarkers"
+				id="com.sap.ims.isa.jcomigrationhelper.marker.editor.generate" label="%actions_marker_generate_label"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring">
+			</action>
+			<action class="com.sap.ims.isa.jcomigrationhelper.imports.OrganizeImportsAndVariables"
+				id="com.sap.ims.isa.jcomigrationhelper.editor.imports" label="%actions_import_organizer_label"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring">
+			</action>
+		</objectContribution>
+	</extension>
+	
+	<!-- keyboard shortcut for the switch action -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			name="%actions_switch_parameter_label"
+			description="%actions_switch_parameter_desc"
+			categoryId="org.eclipse.jdt.ui.category.refactoring"
+			contextId="org.eclipse.jdt.ui.javaEditorScope"
+			id="com.sap.ims.isa.jcomigrationhelper.switchParametersAction.definition"
+			defaultHandler="com.sap.ims.isa.jcomigrationhelper.popup.actions.SwitchParameterHandler">
+		</command>
+	</extension>
+	
+	<extension point="org.eclipse.ui.bindings">
+		<key sequence="Ctrl+Alt+W"
+			commandId="com.sap.ims.isa.jcomigrationhelper.switchParametersAction.definition"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+	</extension>
+</plugin>
