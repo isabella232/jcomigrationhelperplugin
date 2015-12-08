@@ -15,6 +15,7 @@ public final class Messages extends NLS {
     public static String          marker_gen_info_not_generated_title;
     public static String          marker_gen_info_not_generated_type_not_supported;
     public static String          marker_title;
+    public static String          marker_done_title;
     public static String          marker_warn_docline_not_retrieved;
     public static String          marker_warn_update_failed;
     public static String          marker_warn_update_failed_log;

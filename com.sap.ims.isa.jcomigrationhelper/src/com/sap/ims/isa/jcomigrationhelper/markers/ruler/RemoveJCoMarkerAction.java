@@ -35,7 +35,8 @@ public class RemoveJCoMarkerAction extends SelectMarkerRulerAction {
         if(markers.size() > 0) {
             // only activate if at least one of our markers is available
             boolean available = markers.stream()
-                    .anyMatch(m -> MarkerUtilities.isMarkerType(m, MarkerTypes.MARKER.getType()));
+                    .anyMatch(m -> MarkerUtilities.isMarkerType(m, MarkerTypes.MARKER.getType())
+                            || MarkerUtilities.isMarkerType(m, MarkerTypes.MARKER_DONE.getType()));
             this.setEnabled(available);
         }
     }

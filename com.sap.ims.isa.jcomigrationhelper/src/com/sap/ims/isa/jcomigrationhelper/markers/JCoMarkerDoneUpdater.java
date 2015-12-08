@@ -5,9 +5,9 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.eclipse.ui.texteditor.IMarkerUpdater;
 
-public class JCoMarkUpdater implements IMarkerUpdater {
+public class JCoMarkerDoneUpdater implements IMarkerUpdater {
 
-    public JCoMarkUpdater() {}
+    public JCoMarkerDoneUpdater() {}
 
     @Override
     public String[] getAttribute() {
@@ -16,7 +16,7 @@ public class JCoMarkUpdater implements IMarkerUpdater {
 
     @Override
     public String getMarkerType() {
-        return "com.sap.ims.isa.jcomigrationhelper.marker"; //$NON-NLS-1$
+        return "com.sap.ims.isa.jcomigrationhelper.marker.done"; //$NON-NLS-1$
     }
 
     @Override

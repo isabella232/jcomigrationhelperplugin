@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -18,7 +17,6 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.text.edits.MalformedTreeException;
-import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
@@ -44,21 +42,31 @@ public class SwitchParametersAction implements IObjectActionDelegate {
      * @see JavaEditorUtils#getJavaVariableOccurrence(JavaEditor)
      * @see JavaEditorUtils#isValidForProcessing(ASTNode)
      */
-    @SuppressWarnings("unchecked")
     @Override
     public void run(IAction action) {
         TreeSelection selection = JCoMarkerFactory.getTreeSelection();
         if (selection != null) {
             System.out.println("Here is my selection!");
             return;
+        } else {
+            JavaVariableOccurrence occurrences = JavaEditorUtils.getJavaVariableOccurrence(null);
+            this.switchParameters(occurrences);
         }
+    }
+
+    /**
+     * Takes the selection from the editor and tries to switch the parameters.
+     */
+    @SuppressWarnings("unchecked")
+    public void switchParameters(JavaVariableOccurrence occurrences) {
         boolean switchNotDone = true;
-        JavaVariableOccurrence occurrences = JavaEditorUtils.getJavaVariableOccurrence(null);
-        MultiTextEdit multiTextEdit = new MultiTextEdit();
+        ASTRewrite rewrite = null;
         if(occurrences != null) {
             List<ASTNode> nodes = occurrences.getNodes();
             if (nodes.size() > 0) {
                 AST ast = nodes.get(0).getRoot().getAST();
+                rewrite = ASTRewrite.create(ast);
+
                 for (ASTNode n : occurrences.getNodes()) {
                     // we only need the findings where a method of the variable is called
                     if (JavaEditorUtils.isValidForProcessing(n)) {
@@ -76,24 +84,27 @@ public class SwitchParametersAction implements IObjectActionDelegate {
 
                         try {
 
-                            // do the replacement one after another
-                            ASTRewrite rewriteParam0 = ASTRewrite.create(ast);
-                            rewriteParam0.replace(arg0, arg1, null);
-                            TextEdit textEdit0 = rewriteParam0.rewriteAST();
+                            ASTNode moveArg0 = rewrite.createMoveTarget(arg0);
+                            ASTNode moveArg1 = rewrite.createMoveTarget(arg1);
 
-                            ASTRewrite rewriteParam1 = ASTRewrite.create(ast);
-                            rewriteParam1.replace(arg1, arg0, null);
-                            TextEdit textEdit1 = rewriteParam1.rewriteAST();
+                            // do the replacement one after another
+                            // ASTRewrite rewriteParam0 = ASTRewrite.create(ast);
+                            rewrite.replace(arg0, moveArg1, null);
+                            // TextEdit textEdit0 = rewriteParam0.rewriteAST();
+
+                            // ASTRewrite rewriteParam1 = ASTRewrite.create(ast);
+                            rewrite.replace(arg1, moveArg0, null);
+                            // TextEdit textEdit1 = rewriteParam1.rewriteAST();
 
                             // multi edit is required, because we do two changes,
                             // otherwise the result is unpredictable.
-                            multiTextEdit.addChild(textEdit0);
-                            multiTextEdit.addChild(textEdit1);
+                            // multiTextEdit.addChild(textEdit0);
+                            // multiTextEdit.addChild(textEdit1);
 
                             // set the switch that at least one replacement worked.
                             switchNotDone = false;
                         }
-                        catch (JavaModelException | IllegalArgumentException | MalformedTreeException e) {
+                        catch (IllegalArgumentException | MalformedTreeException e) {
                             JCoMigrationHelperPlugin.logErrorMessage(Messages.switch_operation_parameter_init_failed_log, e);
                             MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
                                     Messages.switch_operation_msg_error_title, Messages.switch_operation_error_init_switch_failed);
@@ -107,11 +118,14 @@ public class SwitchParametersAction implements IObjectActionDelegate {
             boolean answer = MessageDialog.openQuestion(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
                     Messages.switch_operation_nothing_changed_title, Messages.switch_operation_nothing_changed_content);
             if(answer == true) {
-                JCoMarkerFactory.DELETE_MARKER_FOR_NODE.accept(occurrences.getNodes().get(0));
+                JCoMarkerFactory.REPLACE_MARKER_FOR_NODE.accept(occurrences.getNodes().get(0));
             }
         } else {
             try {
-                multiTextEdit.apply(occurrences.getDoc());
+                if (rewrite != null) {
+                    TextEdit undoEdit = rewrite.rewriteAST(occurrences.getDoc(), null);
+                    undoEdit.apply(occurrences.getDoc());
+                }
                 // delete the marker if available
                 occurrences.getNodes().stream()
                 // filter the stream to match only the ones with the variable declarations
@@ -119,7 +133,7 @@ public class SwitchParametersAction implements IObjectActionDelegate {
                         || node.getParent() instanceof MethodInvocation
                         || node.getParent() instanceof SingleVariableDeclaration)
                 // now remove all available markers for the filtered nodes
-                .forEach(JCoMarkerFactory.DELETE_MARKER_FOR_NODE);
+                .forEach(JCoMarkerFactory.REPLACE_MARKER_FOR_NODE);
                 try {
                     JCoMarkerFactory.getAnnotationModel(null).updateMarkers(occurrences.getDoc());
                 }
@@ -128,13 +142,15 @@ public class SwitchParametersAction implements IObjectActionDelegate {
                     MessageDialog.openWarning(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
                             Messages.marker_warn_update_title, Messages.marker_warn_update_failed);
                 }
-            } catch (BadLocationException e) {
+            }
+            catch (BadLocationException e) {
                 JCoMigrationHelperPlugin.logErrorMessage(Messages.switch_operation_error_apply_changes_log, e);
                 MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
                         Messages.switch_operation_msg_error_title, Messages.switch_operation_error_apply_changes);
             }
         }
     }
+
 
     /**
      * @see IObjectActionDelegate#setActivePart(IAction, IWorkbenchPart)

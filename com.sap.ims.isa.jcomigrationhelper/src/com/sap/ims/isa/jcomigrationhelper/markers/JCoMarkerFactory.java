@@ -2,15 +2,18 @@ package com.sap.ims.isa.jcomigrationhelper.markers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.eclipse.core.internal.resources.Marker;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -39,7 +42,7 @@ public class JCoMarkerFactory {
 
     public static final String ANNOTATION = "com.sap.ims.isa.jcomigrationhelper.annotation"; //$NON-NLS-1$
 
-    public static final Consumer<ASTNode> DELETE_MARKER_FOR_NODE = node -> {
+    public static final Consumer<ASTNode> REPLACE_MARKER_FOR_NODE = node -> {
         // just to be sure
         if(node.getParent() instanceof VariableDeclarationFragment
                 || node.getParent() instanceof MethodInvocation
@@ -53,6 +56,13 @@ public class JCoMarkerFactory {
             })
             // delete all markers which are in the list
             .forEach(marker -> {
+                // create the new marker that the switch has been executed for this marker and delete the old one
+                int start = MarkerUtilities.getCharStart(marker);
+                int end = MarkerUtilities.getCharEnd(marker) - start;
+                int lineNumber = MarkerUtilities.getLineNumber(marker);
+                Map<String, Object> att = new HashMap<>();
+                att.put(Marker.MESSAGE, Messages.marker_done_title);
+                JCoMarkerFactory.createMarker(MarkerTypes.MARKER_DONE, marker.getResource(), new SourceRange(start, end), lineNumber, att);
                 JCoMarkerFactory.deleteMarker(marker);
             });
 
