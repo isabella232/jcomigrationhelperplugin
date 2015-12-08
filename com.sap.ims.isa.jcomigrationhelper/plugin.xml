@@ -45,20 +45,6 @@
 			markerType="com.sap.ims.isa.jcomigrationhelper.marker" />
 	</extension>
 	
-	<extension
-      point="org.eclipse.jdt.ui.quickFixProcessors">
-   <quickFixProcessor
-         class="com.sap.ims.isa.jcomigrationhelper.markers.SwichMarkerQuickfix"
-         id="org.eclipse.jdt.ui.text.correction.QuickFixProcessor"
-         name="com.sap.ims.isa.jcomigrationhelper.markers.quickfix">
-      <handledMarkerTypes>
-         <markerType
-               id="com.sap.ims.isa.jcomigrationhelper.marker">
-         </markerType>
-      </handledMarkerTypes>
-   </quickFixProcessor>
-</extension>
-	
 	
 	<!-- ================================================================================================================================ --> 
 	<!-- ================================================================================================================================ --> 
