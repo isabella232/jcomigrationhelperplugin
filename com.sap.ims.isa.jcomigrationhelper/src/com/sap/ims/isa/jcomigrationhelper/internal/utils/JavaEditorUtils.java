@@ -82,7 +82,11 @@ public class JavaEditorUtils {
                 // the type is not supported then
                 JCoMigrationHelperPlugin.logWarningMessage(Messages.bind(Messages.warn_type_not_determineable, element.getElementName()), e);
             }
+        } else {
+            // unknown type, not supported!
+            return false;
         }
+
         switch (varType) {
             case "JCoParameterList": //$NON-NLS-1$
             case "QJCoParameterList;": //$NON-NLS-1$
