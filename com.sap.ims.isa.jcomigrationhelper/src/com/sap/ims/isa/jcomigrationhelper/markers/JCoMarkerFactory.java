@@ -2,12 +2,11 @@ package com.sap.ims.isa.jcomigrationhelper.markers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import org.eclipse.core.internal.resources.Marker;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -19,7 +18,6 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.BadLocationException;
@@ -40,35 +38,76 @@ import com.sap.ims.isa.jcomigrationhelper.internal.utils.JavaEditorUtils;
 
 public class JCoMarkerFactory {
 
-    public static final String ANNOTATION = "com.sap.ims.isa.jcomigrationhelper.annotation"; //$NON-NLS-1$
-
-    public static final Consumer<ASTNode> REPLACE_MARKER_FOR_NODE = node -> {
+    /**
+     * Replaces the {@link MarkerTypes#MARKER} with the {@link MarkerTypes#MARKER_DONE} for the given node. If no marker
+     * is existing at the node, then the {@link MarkerTypes#MARKER_DONE} will be added. If the resource is
+     * <code>null</code> then the one from the Java Editor will be used ( {@link JavaEditorUtils#getCurrentResource()}
+     * ). The document is needed if the node does not have an existing marker yet and you want a line number to be added
+     * to the marker.<br>
+     * The parent of the node must be of type {@link ASTNode#VARIABLE_DECLARATION_FRAGMENT},
+     * {@link ASTNode#SINGLE_VARIABLE_DECLARATION} or {@link ASTNode#METHOD_INVOCATION}.
+     *
+     * @param node
+     *            The node to replace or add marker.
+     * @param res
+     *            The resource to work with.
+     * @param doc
+     *            The document where to add the marker.
+     */
+    public static void replaceMarkerOrAddMarker(ASTNode node, IResource res, IDocument doc) {
         // just to be sure
-        if(node.getParent() instanceof VariableDeclarationFragment
-                || node.getParent() instanceof MethodInvocation
-                || node.getParent() instanceof SingleVariableDeclaration) {
-            int startChar = node.getStartPosition();
-            int endChar = node.getStartPosition() + node.getLength();
-            JCoMarkerFactory.findMarkers(JavaEditorUtils.getCurrentResource()).stream()
-            // take only the markers which match the selection
-            .filter(marker -> {
-                return MarkerUtilities.getCharStart(marker) == startChar && MarkerUtilities.getCharEnd(marker) == endChar;
-            })
-            // delete all markers which are in the list
-            .forEach(marker -> {
-                // create the new marker that the switch has been executed for this marker and delete the old one
-                int start = MarkerUtilities.getCharStart(marker);
-                int end = MarkerUtilities.getCharEnd(marker) - start;
-                int lineNumber = MarkerUtilities.getLineNumber(marker);
-                Map<String, Object> att = new HashMap<>();
-                att.put(Marker.MESSAGE, Messages.marker_done_title);
-                JCoMarkerFactory.createMarker(MarkerTypes.MARKER_DONE, marker.getResource(), new SourceRange(start, end), lineNumber, att);
-                JCoMarkerFactory.deleteMarker(marker);
-            });
+        int parentType = node.getParent().getNodeType();
+        if(parentType == ASTNode.VARIABLE_DECLARATION_FRAGMENT
+ || parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT
+                || parentType == ASTNode.METHOD_INVOCATION
+                || parentType == ASTNode.SINGLE_VARIABLE_DECLARATION) {
 
+            if(parentType == ASTNode.METHOD_INVOCATION) {
+                // further checks required, only certain methods are supported!
+                MethodInvocation m = (MethodInvocation) node.getParent();
+                if(!JavaEditorUtils.isMethodSupported(m.getName().getFullyQualifiedName())) {
+                    // the method is not supported and no marker operation is required!
+                    return;
+                }
+            }
+
+            if (parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
+                node = ((VariableDeclarationFragment) node).getName();
+            }
+
+            if (res == null) {
+                res = JavaEditorUtils.getCurrentResource();
+            }
+
+            if (res == null) {
+                return;
+            }
+
+            final ISourceRange selection = new SourceRange(node.getStartPosition(), node.getLength());
+            List<IMarker> markersAtSelection = getMarkersAtSelection(res, selection);
+
+            if (markersAtSelection.isEmpty()) {
+                int lineNumber = -1;
+                if (doc != null) {
+                    lineNumber = getLineFromOffset(doc, selection.getOffset());
+                }
+                JCoMarkerFactory.createMarker(MarkerTypes.MARKER_DONE, res, selection, lineNumber);
+
+            } else {
+                markersAtSelection
+                // delete all markers which are in the list
+                .forEach(marker -> {
+                    // create the new marker that the switch has been executed for this marker and delete the
+                    // old one
+                    int lineNumber = MarkerUtilities.getLineNumber(marker);
+                    JCoMarkerFactory.deleteMarker(marker);
+                    JCoMarkerFactory.createMarker(MarkerTypes.MARKER_DONE, marker.getResource(), selection,
+                            lineNumber);
+                });
+            }
         }
-    };
 
+    }
     /**
      * Creates a Marker of type {@link MarkerTypes#MARKER}. Calls the method
      * {@link #createMarker(MarkerTypes, IResource, ISourceRange, int, Map)} to create that type of marker.
@@ -88,9 +127,8 @@ public class JCoMarkerFactory {
      *             In case of an error.
      * @see #createMarker(MarkerTypes, IResource, ISourceRange, int, Map)
      */
-    public static IMarker createMarker(IResource res, ISourceRange selection, int documentLineNumber,
-            Map<String, Object> attrMap) {
-        return createMarker(MarkerTypes.MARKER, res, selection, documentLineNumber, attrMap);
+    public static IMarker createMarker(IResource res, ISourceRange selection, int documentLineNumber) {
+        return createMarker(MarkerTypes.MARKER, res, selection, documentLineNumber);
     }
 
     /**
@@ -116,26 +154,24 @@ public class JCoMarkerFactory {
      *             In case of an error.
      */
     public static IMarker createMarker(MarkerTypes markerType, IResource res, ISourceRange selection,
-            int documentLineNumber, Map<String, Object> attrMap) {
+            int documentLineNumber) {
         IMarker marker = null;
         try {
             // do not create markers at the same position multiple times
             if (selection != null) {
-                for (IMarker m : res.findMarkers(markerType.getType(), false, IResource.DEPTH_ONE)) {
-                    if (MarkerUtilities.isMarkerType(m, markerType.getType())
-                            && MarkerUtilities.getCharStart(m) == selection.getOffset()
-                            && MarkerUtilities.getCharEnd(m) == selection.getOffset() + selection.getLength()) {
-                        return m;
-                    }
+                List<IMarker> markersAtSelection = getMarkersAtSelection(res, selection);
+                if (!markersAtSelection.isEmpty()) {
+                    return markersAtSelection.get(0);
                 }
             }
             // note: you use the id that is defined in your plugin.xml
             marker = res.createMarker(markerType.getType());
-            if(attrMap != null && attrMap.size() > 0) {
-                marker.setAttributes(attrMap);
-            } else {
-                marker.setAttribute(IMarker.MESSAGE, Messages.marker_title);
+            String msg = Messages.marker_title;
+            if (markerType == MarkerTypes.MARKER_DONE) {
+                msg = Messages.marker_done_title;
             }
+            marker.setAttribute(IMarker.MESSAGE, msg);
+
             if (selection != null) {
                 MarkerUtilities.setCharStart(marker, selection.getOffset());
                 MarkerUtilities.setCharEnd(marker, selection.getOffset() + selection.getLength());
@@ -150,6 +186,33 @@ public class JCoMarkerFactory {
                     Messages.markers_error_createmarkers_msg_title, Messages.markers_error_createmarkers_msg_content);
         }
         return marker;
+    }
+
+    /**
+     * Searches for all markers of type {@link MarkerTypes#MARKER} and its subtypes and checks if the marker range
+     * is the same as in the selection. If yes, then only matching markers will be returned otherwise an empty list.
+     * {@link CoreException}s will be swallowed and logged.
+     *
+     * @param res The resource to search for markers.
+     * @param selection The selection which we are interested in.
+     * @return A list of matching markers or an empty list.
+     */
+    public static List<IMarker> getMarkersAtSelection(IResource res, ISourceRange selection) {
+        IMarker[] markers;
+        try {
+            markers = res.findMarkers(MarkerTypes.MARKER.getType(), true, IResource.DEPTH_ONE);
+            if (markers != null) {
+                return Arrays.stream(markers)
+                        .filter(m -> MarkerUtilities.getCharStart(m) == selection.getOffset()
+                        && MarkerUtilities.getCharEnd(m) == selection.getOffset() + selection.getLength())
+                        .collect(Collectors.toList());
+            }
+        }
+        catch (CoreException e) {
+            JCoMigrationHelperPlugin
+            .logWarningMessage(Messages.bind(Messages.markers_error_finding_markers, res.getFullPath()), e);
+        }
+        return Collections.emptyList();
     }
 
     /**
@@ -215,8 +278,8 @@ public class JCoMarkerFactory {
         }
     }
 
-    /*
-     * Returns the selection of the package explorer
+    /**
+     * Returns the {@link TreeSelection} of the package explorer or <code>null</code> if none could be found.
      */
     public static TreeSelection getTreeSelection() {
 

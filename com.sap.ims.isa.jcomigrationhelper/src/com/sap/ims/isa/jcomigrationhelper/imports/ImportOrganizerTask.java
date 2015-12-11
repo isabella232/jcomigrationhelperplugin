@@ -17,10 +17,11 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.internal.core.DocumentAdapter;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.text.edits.TextEdit;
 
@@ -67,7 +68,7 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
                                 Messages.imports_error_title, Messages.markers_error_getting_src_folders);
                     }
                 } else if (obj instanceof ICompilationUnit) {
-                    this.processCompulationUnit((ICompilationUnit) obj);
+                    this.processCompilationUnit((ICompilationUnit) obj);
                 } else if (obj instanceof IPackageFragment) {
                     this.processFragments((IPackageFragment) obj);
 
@@ -99,23 +100,12 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
     /**
      * Generates the markers in the given compilation unit.
      */
-    public void processCompulationUnit(ICompilationUnit cu) {
+    public void processCompilationUnit(ICompilationUnit cu) {
         this.sendMsgToMonitor(Messages.bind(Messages.task_output_imports_starting_orga_for_compilation_unit, cu.getResource().getName()));
-        ASTParser parser = ASTParser.newParser(AST.JLS8);
-        try {
-            cu.becomeWorkingCopy(this.monitor);
-        }
-        catch (JavaModelException e) {
-            JCoMigrationHelperPlugin.logErrorMessage(
-                    Messages.bind(Messages.task_output_imports_error_create_workingcopy, cu.getResource()), e);
+        final CompilationUnit parsedCu = this.getParsedCU(cu);
+        if (parsedCu == null) {
             return;
         }
-        parser.setSource(cu);
-        // parser.setBindingsRecovery(true);
-        // parser.setResolveBindings(true);
-        parser.setKind(ASTParser.K_COMPILATION_UNIT);
-
-        CompilationUnit parsedCu = (CompilationUnit) parser.createAST(null);
         parsedCu.recordModifications();
 
         ImportsVisitor visitor = new ImportsVisitor(parsedCu, cu.getResource());
@@ -123,17 +113,10 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
 
         List<ASTNode> matches = visitor.getMatches();
         if (!matches.isEmpty()) {
-            final Document doc;
-            try {
-                doc = new Document(cu.getSource());
-            }
-            catch (JavaModelException e) {
-                JCoMigrationHelperPlugin.logErrorMessage(
-                        Messages
-                        .bind(Messages.task_output_imports_error_create_doc_instance, cu.getResource()), e);
+            final IDocument doc = this.getDocumentFromCU(cu);
+            if (doc == null) {
                 return;
             }
-
             AST ast = parsedCu.getAST();
             ASTRewrite rewrite = ASTRewrite.create(ast);
             for (ASTNode selectedNode : matches) {
@@ -159,20 +142,82 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
 
             }  // end for (ASTNode selectedNode : matches)
             this.applyChanges(cu, parsedCu, doc, rewrite);
+
+            // TODO add the markers where everything has been applied.
         }  // end if(!generatedMarkers.isEmpty())
     }
 
-    protected void applyChanges(ICompilationUnit cu, CompilationUnit parsedCu, final Document doc, ASTRewrite rewrite) {
+    /**
+     * This is the correct way to create a document and modify the compilation unit. The other way using new
+     * {@link Document} leaded to loss of all markers in a compilation unit.
+     *
+     * @param cu
+     *            The compilation unit to get the document from.
+     * @return An instance of the document to work with or <code>null</code> if something went wrong.
+     */
+    public IDocument getDocumentFromCU(ICompilationUnit cu) {
         try {
-            parsedCu.rewrite(doc, null);
-            TextEdit edit = rewrite.rewriteAST(doc, cu.getJavaProject().getOptions(true));
-            edit.apply(doc);
+            return new DocumentAdapter(cu.getBuffer());
+        }
+        catch (JavaModelException e) {
+            JCoMigrationHelperPlugin.logErrorMessage(
+                    Messages.bind(Messages.task_output_imports_error_create_doc_instance, cu.getResource()), e);
+        }
+        return null;
+    }
 
-            cu.getBuffer().setContents(doc.get());
-            cu.reconcile(ICompilationUnit.NO_AST, false, null, this.monitor);
+    /**
+     * Get a compilation unit from the interface to work with the AST parser later.
+     *
+     * @param cu
+     *            The compilation unit interface to get the AST parsed version from.
+     * @return A parsed compilation unit for the followed modifications or <code>null</code> if something went wrong.
+     */
+    protected CompilationUnit getParsedCU(ICompilationUnit cu) {
+        ASTParser parser = ASTParser.newParser(ASTParser.K_COMPILATION_UNIT);
+        parser.setResolveBindings(true);
+        parser.setBindingsRecovery(true);
+
+        try {
+            cu.becomeWorkingCopy(this.getMonitor());
+        }
+        catch (JavaModelException e) {
+            JCoMigrationHelperPlugin.logErrorMessage(
+                    Messages.bind(Messages.task_output_imports_error_create_workingcopy, cu.getResource()), e);
+            return null;
+        }
+        parser.setSource(cu);
+
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
+
+        CompilationUnit parsedCu = (CompilationUnit) parser.createAST(this.getMonitor());
+        return parsedCu;
+    }
+
+    /**
+     * Applies the changes from the {@link ASTRewrite} instance to the given compilation unit.
+     *
+     * @param cu
+     *            The compilation unit interface where parser has been started.
+     * @param parsedCu
+     *            The parsed CU from the interface, where the AST changes have been done.
+     * @param doc
+     *            The document from the CU interface.
+     * @param rewrite
+     *            All the modifications done with the parsed CU.
+     * @see #getParsedCU(ICompilationUnit)
+     */
+    protected void applyChanges(ICompilationUnit cu, CompilationUnit parsedCu, final IDocument doc,
+            ASTRewrite rewrite) {
+        try {
+            // parsedCu.rewrite(doc, null);
+            TextEdit edit = rewrite.rewriteAST(doc, cu.getJavaProject().getOptions(true));
+            cu.applyTextEdit(edit, this.monitor);
+
+            cu.reconcile(AST.JLS8, false, null, this.monitor);
             cu.commitWorkingCopy(true, this.monitor);
         }
-        catch (BadLocationException | JavaModelException | IllegalArgumentException e) {
+        catch (JavaModelException | IllegalArgumentException e) {
             JCoMigrationHelperPlugin.logWarningMessage(Messages.marker_warn_update_failed_log, e);
             JCoMigrationHelperPlugin.showErrorMessage(
                     Messages.marker_warn_update_title, Messages.marker_warn_update_failed);
@@ -187,7 +232,7 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
         try {
             if(pack.containsJavaResources()) {
                 this.sendMsgToMonitor(Messages.bind(Messages.task_output_imports_starting_orga_for_package, pack.getElementName()));
-                Arrays.stream(pack.getCompilationUnits()).forEach(cu -> this.processCompulationUnit(cu));
+                Arrays.stream(pack.getCompilationUnits()).forEach(cu -> this.processCompilationUnit(cu));
             }
         } catch(JavaModelException e) {
             JCoMigrationHelperPlugin
@@ -218,6 +263,10 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
 
     public void setMonitor(IProgressMonitor monitor) {
         this.monitor = monitor;
+    }
+
+    public IProgressMonitor getMonitor() {
+        return this.monitor;
     }
 }
 

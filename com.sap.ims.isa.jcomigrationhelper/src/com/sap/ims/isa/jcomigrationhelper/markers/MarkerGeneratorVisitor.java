@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 
+import com.sap.ims.isa.jcomigrationhelper.i18n.Messages;
 import com.sap.ims.isa.jcomigrationhelper.internal.utils.JavaEditorUtils;
 
 public class MarkerGeneratorVisitor extends ASTVisitor {
@@ -36,6 +37,11 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
     private IResource res;
 
     /**
+     * The type of marker to create of every finding.
+     */
+    private MarkerTypes     markerType = MarkerTypes.MARKER;
+
+    /**
      * The visitor requires for its work the document and the resource. If the values are not set, then a
      * {@link NullPointerException} will be thrown!
      * @param document the document the AST has been created on.
@@ -43,14 +49,43 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
      * @throws NullPointerException If one of the arguments is null.
      */
     public MarkerGeneratorVisitor(CompilationUnit document, IResource res) {
-        Objects.requireNonNull(document, "The document must not be null!");
-        Objects.requireNonNull(res, "The resource must not be null!");
+        this(document, res, MarkerTypes.MARKER);
+    }
+
+    public MarkerGeneratorVisitor(CompilationUnit document, IResource res, MarkerTypes markerType) {
+        super();
+        Objects.requireNonNull(document, Messages.asserts_error_not_null_doc);
+        Objects.requireNonNull(res, Messages.asserts_error_not_null_resource);
         this.document = document;
         this.res = res;
+        if (markerType != null) {
+            this.markerType = markerType;
+        }
     }
 
     /**
-     * Will be called if the visit of {@link VariableDeclarationStatement} or of the {@link FieldDeclaration} returned <code>true</code>.
+     * The marker type that will be used during generation.
+     *
+     * @return The marker type that will be used during generation.
+     */
+    public MarkerTypes getMarkerType() {
+        return this.markerType;
+    }
+
+    /**
+     * Change the marker type for the generation.
+     *
+     * @param markerType
+     *            The new marker type for the generation.
+     */
+    public void setMarkerType(MarkerTypes markerType) {
+        this.markerType = markerType;
+    }
+
+    /**
+     * Will be called if the visit of {@link VariableDeclarationStatement} or of the {@link FieldDeclaration} returned
+     * <code>true</code>.
+     *
      * @return Always <code>false</code>, because no further visits are required.
      */
     @Override
@@ -84,7 +119,7 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
             ASTNode[] sameNodes = LinkedNodeFinder.findByNode(root, (SimpleName) selNode);
             if (Arrays.stream(sameNodes).anyMatch(n -> JavaEditorUtils.isValidForProcessing(n))) {
                 int lineNum = this.document.getLineNumber(sourceRange.getOffset());
-                JCoMarkerFactory.createMarker(this.res, sourceRange, lineNum, null);
+                JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
             }
         }
 
@@ -110,7 +145,7 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
                 int start = fromMethod.getName().getStartPosition();
                 SourceRange sourceRange = new SourceRange(start, methodName.length());
                 int lineNum = this.document.getLineNumber(start);
-                JCoMarkerFactory.createMarker(this.res, sourceRange, lineNum, null);
+                JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
                 return true;
             }
         }
@@ -118,7 +153,7 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
     }
 
     /**
-     * Marks also variables which ware method parameters.
+     * Marks also variables which have method parameters.
      */
     @Override
     public boolean visit(MethodDeclaration node) {
@@ -128,10 +163,15 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
             parameters.forEach(param -> {
                 Type type = param.getType();
                 if(!param.isVarargs() && param.getType().isSimpleType() && JavaEditorUtils.isJCoTypeSupported(((SimpleType)type).getName().getFullyQualifiedName())) {
+                    // check if it is using any of the setValue methods.
                     SimpleName varName = param.getName();
-                    SourceRange sourceRange = new SourceRange(varName.getStartPosition(), varName.getFullyQualifiedName().length());
-                    int lineNum = this.document.getLineNumber(sourceRange.getOffset());
-                    JCoMarkerFactory.createMarker(this.res, sourceRange, lineNum, null);
+                    ASTNode[] sameNodes = LinkedNodeFinder.findByNode(node.getRoot(), varName);
+                    if (Arrays.stream(sameNodes).anyMatch(n -> JavaEditorUtils.isValidForProcessing(n))) {
+                        SourceRange sourceRange = new SourceRange(varName.getStartPosition(),
+                                varName.getFullyQualifiedName().length());
+                        int lineNum = this.document.getLineNumber(sourceRange.getOffset());
+                        JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
+                    }
                 }
             });
         }
@@ -141,7 +181,8 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
 
     @Override
     public String toString() {
-        return "MarkerGeneratorVisitor [document=" + this.document + ", res=" + this.res + "]";
-    };
+        return String.format("MarkerGeneratorVisitor [document=%s, res=%s, markerType=%s]", this.document, this.res,
+                this.markerType);
+    }
 
 }

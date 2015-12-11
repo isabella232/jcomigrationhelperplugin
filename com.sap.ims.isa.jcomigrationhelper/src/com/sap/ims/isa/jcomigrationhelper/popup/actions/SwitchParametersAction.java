@@ -1,23 +1,18 @@
 package com.sap.ims.isa.jcomigrationhelper.popup.actions;
 
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
-import org.eclipse.text.edits.MalformedTreeException;
-import org.eclipse.text.edits.TextEdit;
+import org.eclipse.ui.IEditorActionDelegate;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -28,7 +23,7 @@ import com.sap.ims.isa.jcomigrationhelper.internal.utils.JavaVariableOccurrence;
 import com.sap.ims.isa.jcomigrationhelper.markers.JCoMarkerFactory;
 
 @SuppressWarnings("restriction")
-public class SwitchParametersAction implements IObjectActionDelegate {
+public class SwitchParametersAction implements IEditorActionDelegate, IObjectActionDelegate {
 
     public SwitchParametersAction() {}
 
@@ -46,121 +41,48 @@ public class SwitchParametersAction implements IObjectActionDelegate {
     public void run(IAction action) {
         TreeSelection selection = JCoMarkerFactory.getTreeSelection();
         if (selection != null) {
-            System.out.println("Here is my selection!");
-            return;
+            try {
+                ProgressMonitorDialog progressMonitorDialog = new ProgressMonitorDialog(
+                        JCoMigrationHelperPlugin.getActiveWorkbenchShell());
+                progressMonitorDialog.setCancelable(true);
+                progressMonitorDialog.run(true, true, new SwitchParametersTask(selection));
+            }
+            catch (InvocationTargetException e) {
+                JCoMigrationHelperPlugin.logErrorMessage(Messages.switching_params_process_error_in_task, e);
+                MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
+                        Messages.switching_params_process_error_in_task_title,
+                        Messages.switching_params_process_error_in_task);
+            }
+            catch (InterruptedException e) {
+                // Task has been cancelled.
+            }
         } else {
             JavaVariableOccurrence occurrences = JavaEditorUtils.getJavaVariableOccurrence(null);
-            this.switchParameters(occurrences);
+            SwitchParametersTask task = new SwitchParametersTask(null);
+            ASTRewrite rewrite = task.switchParameters(occurrences, null, false);
+            task.applyInEditor(occurrences.getDoc(), rewrite);
+            task.updateProcessedMarkers(occurrences.getDoc(), occurrences.getNodes());
         }
     }
 
     /**
-     * Takes the selection from the editor and tries to switch the parameters.
-     */
-    @SuppressWarnings("unchecked")
-    public void switchParameters(JavaVariableOccurrence occurrences) {
-        boolean switchNotDone = true;
-        ASTRewrite rewrite = null;
-        if(occurrences != null) {
-            List<ASTNode> nodes = occurrences.getNodes();
-            if (nodes.size() > 0) {
-                AST ast = nodes.get(0).getRoot().getAST();
-                rewrite = ASTRewrite.create(ast);
-
-                for (ASTNode n : occurrences.getNodes()) {
-                    // we only need the findings where a method of the variable is called
-                    if (JavaEditorUtils.isValidForProcessing(n)) {
-
-                        List<ASTNode> args = (List<ASTNode>) n.getParent().getStructuralProperty(MethodInvocation.ARGUMENTS_PROPERTY);
-                        if(args.size() != 2) {
-                            // only do the replacement if there is only one node, because then it is a call like getImportParameterList().setValue(...
-                            if(occurrences.getNodes().size() != 1) {
-                                continue;
-                            }
-                            args = (List<ASTNode>) n.getParent().getParent().getStructuralProperty(MethodInvocation.ARGUMENTS_PROPERTY);
-                        }
-                        ASTNode arg0 = args.get(0);
-                        ASTNode arg1 = args.get(1);
-
-                        try {
-
-                            ASTNode moveArg0 = rewrite.createMoveTarget(arg0);
-                            ASTNode moveArg1 = rewrite.createMoveTarget(arg1);
-
-                            // do the replacement one after another
-                            // ASTRewrite rewriteParam0 = ASTRewrite.create(ast);
-                            rewrite.replace(arg0, moveArg1, null);
-                            // TextEdit textEdit0 = rewriteParam0.rewriteAST();
-
-                            // ASTRewrite rewriteParam1 = ASTRewrite.create(ast);
-                            rewrite.replace(arg1, moveArg0, null);
-                            // TextEdit textEdit1 = rewriteParam1.rewriteAST();
-
-                            // multi edit is required, because we do two changes,
-                            // otherwise the result is unpredictable.
-                            // multiTextEdit.addChild(textEdit0);
-                            // multiTextEdit.addChild(textEdit1);
-
-                            // set the switch that at least one replacement worked.
-                            switchNotDone = false;
-                        }
-                        catch (IllegalArgumentException | MalformedTreeException e) {
-                            JCoMigrationHelperPlugin.logErrorMessage(Messages.switch_operation_parameter_init_failed_log, e);
-                            MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
-                                    Messages.switch_operation_msg_error_title, Messages.switch_operation_error_init_switch_failed);
-                            break;
-                        } // end catch
-                    } // end if isValidForProcessing
-                } // end loop
-            } // end if(nodes.size() > 0)
-        } // end if occurrences != null
-        if(switchNotDone == true) {
-            boolean answer = MessageDialog.openQuestion(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
-                    Messages.switch_operation_nothing_changed_title, Messages.switch_operation_nothing_changed_content);
-            if(answer == true) {
-                JCoMarkerFactory.REPLACE_MARKER_FOR_NODE.accept(occurrences.getNodes().get(0));
-            }
-        } else {
-            try {
-                if (rewrite != null) {
-                    TextEdit undoEdit = rewrite.rewriteAST(occurrences.getDoc(), null);
-                    undoEdit.apply(occurrences.getDoc());
-                }
-                // delete the marker if available
-                occurrences.getNodes().stream()
-                // filter the stream to match only the ones with the variable declarations
-                .filter(node -> node.getParent() instanceof VariableDeclarationFragment
-                        || node.getParent() instanceof MethodInvocation
-                        || node.getParent() instanceof SingleVariableDeclaration)
-                // now remove all available markers for the filtered nodes
-                .forEach(JCoMarkerFactory.REPLACE_MARKER_FOR_NODE);
-                try {
-                    JCoMarkerFactory.getAnnotationModel(null).updateMarkers(occurrences.getDoc());
-                }
-                catch (CoreException e) {
-                    JCoMigrationHelperPlugin.logWarningMessage(Messages.marker_warn_update_failed_log, e);
-                    MessageDialog.openWarning(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
-                            Messages.marker_warn_update_title, Messages.marker_warn_update_failed);
-                }
-            }
-            catch (BadLocationException e) {
-                JCoMigrationHelperPlugin.logErrorMessage(Messages.switch_operation_error_apply_changes_log, e);
-                MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
-                        Messages.switch_operation_msg_error_title, Messages.switch_operation_error_apply_changes);
-            }
-        }
-    }
-
-
-    /**
+     * Empty, no implementation in this class.
+     * 
      * @see IObjectActionDelegate#setActivePart(IAction, IWorkbenchPart)
      */
     @Override
     public void setActivePart(IAction action, IWorkbenchPart targetPart) {}
 
+    /**
+     * Enables the action if there is a selection in the package explorer or a valid element has been selected in the
+     * editor.
+     */
     @Override
     public void selectionChanged(IAction action, ISelection selection) {
-
+        if (selection != null) {
+            action.setEnabled(true);
+            return;
+        }
         IJavaElement javaElement = JavaEditorUtils.getCurrentSelectedJaveElement();
         if (JavaEditorUtils.isJavaElementSupported(javaElement) == true) {
             action.setEnabled(true);
@@ -168,4 +90,7 @@ public class SwitchParametersAction implements IObjectActionDelegate {
         }
         action.setEnabled(false);
     }
+
+    @Override
+    public void setActiveEditor(IAction paramIAction, IEditorPart paramIEditorPart) {}
 }

@@ -8,9 +8,8 @@
 	<extension id="com.sap.ims.isa.jcomigrationhelper.marker" point="org.eclipse.core.resources.markers"
 			   name="%marker_name">
 		<super type="org.eclipse.core.resources.marker" />
-		<persistent value="true" />
-		<attribute name="description" />
 		<super type="org.eclipse.core.resources.textmarker" />
+		<persistent value="true" />
 	</extension>
 	
 	<!-- Link marker with annotation -->
@@ -52,10 +51,8 @@
 	<!-- done marker definition -->
 	<extension id="com.sap.ims.isa.jcomigrationhelper.marker.done" point="org.eclipse.core.resources.markers"
 			   name="%marker_name_done">
-		<super type="org.eclipse.core.resources.marker" />
+		<super type="com.sap.ims.isa.jcomigrationhelper.marker" />
 		<persistent value="true" />
-		<attribute name="description" />
-		<super type="org.eclipse.core.resources.textmarker" />
 	</extension>
 	
 	<!-- Link marker with annotation -->
@@ -213,6 +210,11 @@
 			<action class="com.sap.ims.isa.jcomigrationhelper.imports.OrganizeImportsAndVariables"
 				id="com.sap.ims.isa.jcomigrationhelper.editor.imports" label="%actions_import_organizer_label"
 				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring">
+			</action>
+			<action label="%actions_switch_parameter_for_selection_label"
+				class="com.sap.ims.isa.jcomigrationhelper.popup.actions.SwitchParametersAction"
+				menubarPath="com.sap.ims.isa.jcomigrationhelper.enablementmenu.editor/refactoring"
+				id="com.sap.ims.isa.jcomigrationhelper.switch">
 			</action>
 		</objectContribution>
 	</extension>

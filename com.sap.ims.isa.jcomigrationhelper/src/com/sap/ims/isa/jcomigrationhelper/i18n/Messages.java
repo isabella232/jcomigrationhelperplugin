@@ -28,6 +28,7 @@ public final class Messages extends NLS {
     public static String          markers_error_getting_packages_log;
     public static String          markers_error_getting_src_folders;
     public static String          markers_error_getting_src_folders_log;
+    public static String          markers_error_finding_markers;
     public static String          switch_operation_error_apply_changes;
     public static String          switch_operation_error_apply_changes_log;
     public static String          switch_operation_error_init_switch_failed;
@@ -43,25 +44,32 @@ public final class Messages extends NLS {
     public static String          task_output_cancel_requested;
     public static String          task_output_starting_generation;
 
-    public static String task_output_starting_generation_for_compilation_unit;
-    public static String task_output_starting_generation_for_package;
-    public static String task_output_starting_generation_for_project;
+    public static String          task_output_starting_generation_for_compilation_unit;
+    public static String          task_output_starting_generation_for_package;
+    public static String          task_output_starting_generation_for_project;
 
-    public static String imports_gen_error_in_task;
-    public static String imports_gen_info_not_generated_title;
-    public static String imports_gen_info_not_generated_type_not_supported;
+    public static String          imports_gen_error_in_task;
+    public static String          imports_gen_info_not_generated_title;
+    public static String          imports_gen_info_not_generated_type_not_supported;
 
-    public static String imports_error_title;
+    public static String          imports_error_title;
 
-    public static String marker_title_import;
-    public static String task_output_imports_starting_orga;
-    public static String task_output_imports_starting_orga_for_compilation_unit;
-    public static String task_output_imports_starting_orga_for_package;
-    public static String task_output_imports_starting_orga_for_project;
-    public static String task_output_imports_error_apply_changes_title;
-    public static String task_output_imports_error_apply_changes_msg;
-    public static String task_output_imports_error_create_doc_instance;
+    public static String          marker_title_import;
+    public static String          task_output_imports_starting_orga;
+    public static String          task_output_imports_starting_orga_for_compilation_unit;
+    public static String          task_output_imports_starting_orga_for_package;
+    public static String          task_output_imports_starting_orga_for_project;
+    public static String          task_output_imports_error_apply_changes_title;
+    public static String          task_output_imports_error_apply_changes_msg;
+    public static String          task_output_imports_error_create_doc_instance;
     public static String          task_output_imports_error_create_workingcopy;
+
+    public static String          switching_params_process_error_in_task;
+    public static String          switching_params_process_error_in_task_title;
+    public static String          task_output_switching_params_for_compilation_unit;
+
+    public static String          asserts_error_not_null_doc;
+    public static String          asserts_error_not_null_resource;
 
     static {
         reloadMessages();

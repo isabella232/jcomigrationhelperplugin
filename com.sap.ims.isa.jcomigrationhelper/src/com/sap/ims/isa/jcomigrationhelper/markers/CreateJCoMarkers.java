@@ -34,7 +34,8 @@ public class CreateJCoMarkers implements IObjectActionDelegate {
 
     @Override
     public void run(IAction paramIAction) {
-        JCoMarkerFactory.createMarker(this.selectedResource, this.selectedElementRange, JCoMarkerFactory.getLineFromOffset(this.selectedElementRange.getOffset(), null), null);
+        JCoMarkerFactory.createMarker(this.selectedResource, this.selectedElementRange,
+                JCoMarkerFactory.getLineFromOffset(this.selectedElementRange.getOffset(), null));
     }
 
     @Override

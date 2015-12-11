@@ -247,7 +247,7 @@ public class JavaEditorUtils {
             // only setter methods required.
             boolean isValid = parent.getExpression() != null
                     && parent.getExpression().equals(node)
-                    && parent.resolveMethodBinding().getParameterTypes().length == 2
+                    && parent.arguments().size() == 2
                     && parent.getName().getFullyQualifiedName().startsWith("set"); //$NON-NLS-1$
             if(isValid) {
                 return true;
@@ -256,7 +256,7 @@ public class JavaEditorUtils {
                 MethodInvocation parentParent = (MethodInvocation) parent.getParent();
                 return parentParent.getExpression() != null
                         && parentParent.getExpression().equals(parent)
-                        && parentParent.resolveMethodBinding().getParameterTypes().length == 2
+                        && parentParent.arguments().size() == 2
                         && parentParent.getName().getFullyQualifiedName().startsWith("set"); //$NON-NLS-1$
             }
         }
