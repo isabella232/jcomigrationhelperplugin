@@ -116,11 +116,7 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
             // check if the variable is used somewhere
             ASTNode root = node.getRoot();
             ASTNode selNode = NodeFinder.perform(root, sourceRange.getOffset(), 1);
-            ASTNode[] sameNodes = LinkedNodeFinder.findByNode(root, (SimpleName) selNode);
-            if (Arrays.stream(sameNodes).anyMatch(n -> JavaEditorUtils.isValidForProcessing(n))) {
-                int lineNum = this.document.getLineNumber(sourceRange.getOffset());
-                JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
-            }
+            this.createMarkerIfValid(root, (SimpleName) selNode);
         }
 
         return false;
@@ -164,19 +160,34 @@ public class MarkerGeneratorVisitor extends ASTVisitor {
                 Type type = param.getType();
                 if(!param.isVarargs() && param.getType().isSimpleType() && JavaEditorUtils.isJCoTypeSupported(((SimpleType)type).getName().getFullyQualifiedName())) {
                     // check if it is using any of the setValue methods.
-                    SimpleName varName = param.getName();
-                    ASTNode[] sameNodes = LinkedNodeFinder.findByNode(node.getRoot(), varName);
-                    if (Arrays.stream(sameNodes).anyMatch(n -> JavaEditorUtils.isValidForProcessing(n))) {
-                        SourceRange sourceRange = new SourceRange(varName.getStartPosition(),
-                                varName.getFullyQualifiedName().length());
-                        int lineNum = this.document.getLineNumber(sourceRange.getOffset());
-                        JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
-                    }
+                    this.createMarkerIfValid(node.getRoot(), param.getName());
                 }
             });
         }
 
         return true;
+    }
+
+    /**
+     * Checks if the variable name is used in the compilation unit with the set-Value methods. For this is it searching
+     * for all nodes using this variables {@link LinkedNodeFinder#findByNode(ASTNode, SimpleName)} and then checks if
+     * the list of the usages is value for the switch variables functionality using
+     * {@link JavaEditorUtils#isValidForProcessing(ASTNode)}. If this is the case then a marker will be created at the
+     * position of this variable.
+     * 
+     * @param cuRoot
+     *            The root node of this compilation unit.
+     * @param varName
+     *            The simple name of the variable to look at.
+     */
+    public void createMarkerIfValid(ASTNode cuRoot, SimpleName varName) {
+        ASTNode[] sameNodes = LinkedNodeFinder.findByNode(cuRoot, varName);
+        if (Arrays.stream(sameNodes).anyMatch(n -> JavaEditorUtils.isValidForProcessing(n))) {
+            SourceRange sourceRange = new SourceRange(varName.getStartPosition(),
+                    varName.getFullyQualifiedName().length());
+            int lineNum = this.document.getLineNumber(sourceRange.getOffset());
+            JCoMarkerFactory.createMarker(this.markerType, this.res, sourceRange, lineNum);
+        }
     }
 
     @Override
