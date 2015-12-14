@@ -143,7 +143,6 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
             }  // end for (ASTNode selectedNode : matches)
             this.applyChanges(cu, parsedCu, doc, rewrite);
 
-            // TODO add the markers where everything has been applied.
         }  // end if(!generatedMarkers.isEmpty())
     }
 
