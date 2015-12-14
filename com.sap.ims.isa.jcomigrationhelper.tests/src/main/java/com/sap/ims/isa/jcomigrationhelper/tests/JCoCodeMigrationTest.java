@@ -16,7 +16,7 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
 
     /**
      * Tests the migration of the imports and variables.
-     * 
+     *
      * @throws Exception
      *             In case of an error.
      */
@@ -25,7 +25,8 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
 
         IPackageFragment pkg = this.srcFolder.createPackageFragment("com.sap.ims.isa.tests.jcomigration.imports", false,
                 null);
-        java.nio.file.Path migrationSourceFilePath = this.resourcesPath.resolve("OldJCoAllInOne.java.resource");
+        java.nio.file.Path migrationSourceFilePath = this.resourcesPath
+                .resolve("migration/OldJCoAllInOne.java.resource");
         if (!Files.exists(migrationSourceFilePath)) {
             Assert.fail("The class to be migrated is missing at " + migrationSourceFilePath.toAbsolutePath().normalize() + " !!!!!!");
         }
@@ -37,7 +38,8 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
         task.setMonitor(new DummyProgressMonitor());
         task.processCompilationUnit(cu);
 
-        java.nio.file.Path resultSourceFilePath = this.resourcesPath.resolve("OldJCoAllInOne.java.resource.result");
+        java.nio.file.Path resultSourceFilePath = this.resourcesPath
+                .resolve("migration/OldJCoAllInOne.java.resource.result");
         String migResult = new String(Files.readAllBytes(resultSourceFilePath), StandardCharsets.UTF_8);
 
         Assert.assertEquals("The migration seems to have different results. Actual: " + cu.getSource()
@@ -46,7 +48,9 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
 
     @Before
     public void setUp() throws Exception {
-        this.createProject("migrate_imports_project");
+        if (this.srcFolder == null) {
+            this.createProject("migrate_imports_project");
+        }
     }
 
 }
