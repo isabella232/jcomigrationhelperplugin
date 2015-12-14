@@ -14,6 +14,12 @@ import com.sap.ims.isa.jcomigrationhelper.imports.ImportOrganizerTask;
 public class JCoCodeMigrationTest extends TestsSuiteParent {
 
 
+    /**
+     * Tests the migration of the imports and variables.
+     * 
+     * @throws Exception
+     *             In case of an error.
+     */
     @Test
     public void jcoCodeMigrationForCompilationUnit() throws Exception {
 
