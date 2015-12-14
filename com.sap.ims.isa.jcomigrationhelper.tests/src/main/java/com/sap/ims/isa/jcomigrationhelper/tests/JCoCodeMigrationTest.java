@@ -13,6 +13,10 @@ import com.sap.ims.isa.jcomigrationhelper.imports.ImportOrganizerTask;
 
 public class JCoCodeMigrationTest extends TestsSuiteParent {
 
+    /**
+     * The sub folder within the resource path for the resources of this test class.
+     */
+    private String migration = "migration";
 
     /**
      * Tests the migration of the imports and variables.
@@ -25,21 +29,18 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
 
         IPackageFragment pkg = this.srcFolder.createPackageFragment("com.sap.ims.isa.tests.jcomigration.imports", false,
                 null);
-        java.nio.file.Path migrationSourceFilePath = this.resourcesPath
-                .resolve("migration/OldJCoAllInOne.java.resource");
-        if (!Files.exists(migrationSourceFilePath)) {
-            Assert.fail("The class to be migrated is missing at " + migrationSourceFilePath.toAbsolutePath().normalize() + " !!!!!!");
-        }
+        java.nio.file.Path migrationSourceFilePath = this.getTestResource(this.migration,
+                "OldJCoAllInOne.java.resource");
         String migSrc = new String(Files.readAllBytes(migrationSourceFilePath), StandardCharsets.UTF_8);
 
-        ICompilationUnit cu= pkg.createCompilationUnit("OldJCoAllInOne.java", migSrc, false, null);
+        ICompilationUnit cu = pkg.createCompilationUnit("OldJCoAllInOne.java", migSrc, false, npeMonitor);
 
         ImportOrganizerTask task = new ImportOrganizerTask(null);
-        task.setMonitor(new DummyProgressMonitor());
+        task.setMonitor(npeMonitor);
         task.processCompilationUnit(cu);
 
-        java.nio.file.Path resultSourceFilePath = this.resourcesPath
-                .resolve("migration/OldJCoAllInOne.java.resource.result");
+        java.nio.file.Path resultSourceFilePath = this.getTestResource(this.migration,
+                "OldJCoAllInOne.java.resource.result");
         String migResult = new String(Files.readAllBytes(resultSourceFilePath), StandardCharsets.UTF_8);
 
         Assert.assertEquals("The migration seems to have different results. Actual: " + cu.getSource()
