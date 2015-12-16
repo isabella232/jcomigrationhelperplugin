@@ -119,11 +119,21 @@ public class MarkerGeneratorTask implements IRunnableWithProgress {
         try {
             this.sendMsgToMonitor(Messages.bind(Messages.task_output_starting_generation_for_package, root.getElementName()));
             Arrays.stream(root.getChildren()).map(je -> (IPackageFragment) je)
-                    .forEach(p -> this.generateMarkerForPackage(p));
+            .forEach(p -> this.generateMarkerForPackage(p));
         } catch(JavaModelException e) {
             JCoMigrationHelperPlugin.logErrorMessage(Messages.bind(Messages.markers_error_getting_packages_log, root.getElementName()), e);
             MessageDialog.openError(JCoMigrationHelperPlugin.getActiveWorkbenchShell(),
                     Messages.markers_error_title, Messages.bind(Messages.markers_error_getting_packages, root.getElementName()));
         }
+    }
+
+    /**
+     * Sets a custom monitor. Usually used by the automated tests.
+     * 
+     * @param monitor
+     *            The monitor to use in this task.
+     */
+    public void setMonitor(IProgressMonitor monitor) {
+        this.monitor = monitor;
     };
 }
