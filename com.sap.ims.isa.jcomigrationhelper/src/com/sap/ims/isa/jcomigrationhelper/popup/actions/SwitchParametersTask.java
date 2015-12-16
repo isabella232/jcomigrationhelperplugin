@@ -70,15 +70,20 @@ public class SwitchParametersTask extends ImportOrganizerTask {
 
         AST ast = parsedCu.getAST();
         ASTRewrite rewrite = ASTRewrite.create(ast);
-        List<String> nodes = new ArrayList<>();
+        List<ProcessedNodes> nodes = new ArrayList<>();
         markers.forEach(m -> {
             ASTNode selNode = NodeFinder.perform(parsedCu, MarkerUtilities.getCharStart(m), 1);
-            nodes.add(((SimpleName) selNode).resolveBinding().getKey());
             JavaVariableOccurrence occ = null;
             // methods are handeled differently
             if (selNode.getParent().getNodeType() == ASTNode.METHOD_INVOCATION) {
+                if (((SimpleName) selNode).resolveBinding() != null) {
+                    nodes.add(new ProcessedNodes(((SimpleName) selNode).resolveBinding().getKey()));
+                } else {
+                    nodes.add(new ProcessedNodes(selNode));
+                }
                 occ = new JavaVariableOccurrence(doc, new ASTNode[] { selNode });
             } else {
+                nodes.add(new ProcessedNodes(((SimpleName) selNode).resolveBinding().getKey()));
                 ASTNode[] sameNodes = LinkedNodeFinder.findByNode(parsedCu, (SimpleName) selNode);
                 occ = new JavaVariableOccurrence(doc, sameNodes);
             }
@@ -99,12 +104,21 @@ public class SwitchParametersTask extends ImportOrganizerTask {
         }
 
         nodes.forEach(node -> {
+            ASTNode astNode = null;
+            if (node.isBinding()) {
+                astNode = reParsedCu.findDeclaringNode(node.getBindingKey());
+            } else {
+                astNode = NodeFinder.perform(reParsedCu, node.getRange().getOffset(), 1);
+                if (astNode != null && astNode.getNodeType() == ASTNode.SIMPLE_NAME) {
+                    if (!JavaEditorUtils.isMethodSupported(((SimpleName) astNode).getFullyQualifiedName())) {
+                        return;
+                    }
+                }
+            }
 
-            ASTNode astNode = reParsedCu.findDeclaringNode(node);
             if (astNode == null) {
                 return;
             }
-
             JCoMarkerFactory.replaceMarkerOrAddMarker(astNode, cu.getResource(), docNew);
         });
         // // update the markers after processing the switch
