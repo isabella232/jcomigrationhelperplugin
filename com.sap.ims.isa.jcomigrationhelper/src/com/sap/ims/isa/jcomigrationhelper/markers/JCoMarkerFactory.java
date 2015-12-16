@@ -58,8 +58,9 @@ public class JCoMarkerFactory {
         // just to be sure
         int parentType = node.getParent().getNodeType();
         if(parentType == ASTNode.VARIABLE_DECLARATION_FRAGMENT
- || parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT
+                || parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT
                 || parentType == ASTNode.METHOD_INVOCATION
+                || parentType == ASTNode.FIELD_DECLARATION
                 || parentType == ASTNode.SINGLE_VARIABLE_DECLARATION) {
 
             if(parentType == ASTNode.METHOD_INVOCATION) {
@@ -415,7 +416,7 @@ public class JCoMarkerFactory {
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setSource(cu);
         parser.setResolveBindings(true);
-        // parser.setBindingsRecovery(true);
+        parser.setBindingsRecovery(true);
         CompilationUnit astRoot = (CompilationUnit) parser.createAST(null);
         astRoot.accept(new MarkerGeneratorVisitor(astRoot, cu.getResource()));
     }
