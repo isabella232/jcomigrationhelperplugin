@@ -18,7 +18,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -60,6 +60,7 @@ public class JCoMarkerFactory {
         if(parentType == ASTNode.VARIABLE_DECLARATION_FRAGMENT
                 || parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT
                 || parentType == ASTNode.METHOD_INVOCATION
+                || parentType == ASTNode.METHOD_DECLARATION
                 || parentType == ASTNode.FIELD_DECLARATION
                 || parentType == ASTNode.SINGLE_VARIABLE_DECLARATION) {
 
@@ -72,8 +73,8 @@ public class JCoMarkerFactory {
                 }
             }
 
-            if (parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
-                node = ((VariableDeclarationFragment) node).getName();
+            if (parentType == ASTNode.VARIABLE_DECLARATION_STATEMENT || parentType == ASTNode.METHOD_DECLARATION) {
+                node = ((VariableDeclaration) node).getName();
             }
 
             if (res == null) {
