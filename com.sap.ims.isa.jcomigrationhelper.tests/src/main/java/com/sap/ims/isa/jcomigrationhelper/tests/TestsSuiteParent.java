@@ -1,5 +1,7 @@
 package com.sap.ims.isa.jcomigrationhelper.tests;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Hashtable;
@@ -26,6 +28,9 @@ public abstract class TestsSuiteParent {
      * An empty progress monitor which is required by some tasks, but without any functionality.
      */
     protected static final NullProgressMonitor npeMonitor    = new NullProgressMonitor();
+
+    protected static final String              RESOURCE_POSTFIX        = ".resource";
+    protected static final String              RESOURCE_RESULT_POSTFIX = RESOURCE_POSTFIX + ".result";
 
     /**
      * The source folder of the project which has been created.
@@ -115,5 +120,35 @@ public abstract class TestsSuiteParent {
             }
         }
         return resourceFilePath;
+    }
+
+    /**
+     * Asserts with if the values are the same with a common message.
+     * 
+     * @param expected
+     *            The expected value.
+     * @param actual
+     *            The actual value.
+     */
+    protected void assertEquals(String expected, String actual) {
+        Assert.assertEquals(
+                "The files seem to have different contents. Actual: " + actual + "\n\nExpected: " + expected, expected,
+                actual);
+    }
+
+    /**
+     * Reads the content from the test resource by using {@link #getTestResource(String...)} and read whole content into
+     * a string which is returned.
+     *
+     * @param testResource
+     *            The resource to read.
+     * @return The file content of the resource.
+     * @throws IOException
+     *             In case of any error.
+     * @see #getTestResource(String...)
+     */
+    protected String readContentFromTestResource(String... testResource) throws IOException {
+        java.nio.file.Path resultSourceFilePath = this.getTestResource(testResource);
+        return new String(Files.readAllBytes(resultSourceFilePath), StandardCharsets.UTF_8);
     }
 }

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,24 +26,23 @@ public class JCoCodeMigrationTest extends TestsSuiteParent {
     @Test
     public void jcoCodeMigrationForCompilationUnit() throws Exception {
 
+        String usedResourceName = "OldJCoAllInOne.java";
+
         IPackageFragment pkg = this.srcFolder.createPackageFragment("com.sap.ims.isa.tests.jcomigration.imports", false,
                 null);
         java.nio.file.Path migrationSourceFilePath = this.getTestResource(this.migration,
-                "OldJCoAllInOne.java.resource");
+                usedResourceName + RESOURCE_POSTFIX);
         String migSrc = new String(Files.readAllBytes(migrationSourceFilePath), StandardCharsets.UTF_8);
 
-        ICompilationUnit cu = pkg.createCompilationUnit("OldJCoAllInOne.java", migSrc, false, npeMonitor);
+        ICompilationUnit cu = pkg.createCompilationUnit(usedResourceName, migSrc, false, npeMonitor);
 
         ImportOrganizerTask task = new ImportOrganizerTask(null);
         task.setMonitor(npeMonitor);
         task.processCompilationUnit(cu);
 
-        java.nio.file.Path resultSourceFilePath = this.getTestResource(this.migration,
-                "OldJCoAllInOne.java.resource.result");
-        String migResult = new String(Files.readAllBytes(resultSourceFilePath), StandardCharsets.UTF_8);
+        String migResult = this.readContentFromTestResource(this.migration, usedResourceName + RESOURCE_RESULT_POSTFIX);
 
-        Assert.assertEquals("The migration seems to have different results. Actual: " + cu.getSource()
-        + "\n\nExpected: " + migResult, migResult, cu.getSource());
+        this.assertEquals(migResult, cu.getSource());
     }
 
     @Before
