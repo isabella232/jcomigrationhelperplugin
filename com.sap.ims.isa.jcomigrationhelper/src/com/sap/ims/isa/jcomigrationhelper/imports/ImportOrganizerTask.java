@@ -173,7 +173,7 @@ public class ImportOrganizerTask implements IRunnableWithProgress {
      * @return A parsed compilation unit for the followed modifications or <code>null</code> if something went wrong.
      */
     protected CompilationUnit getParsedCU(ICompilationUnit cu) {
-        ASTParser parser = ASTParser.newParser(ASTParser.K_COMPILATION_UNIT);
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
 
