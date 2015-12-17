@@ -76,11 +76,8 @@ public class SwitchParametersTask extends ImportOrganizerTask {
             JavaVariableOccurrence occ = null;
             // methods are handeled differently
             if (selNode.getParent().getNodeType() == ASTNode.METHOD_INVOCATION) {
-                if (((SimpleName) selNode).resolveBinding() != null) {
-                    nodes.add(new ProcessedNodes(((SimpleName) selNode).resolveBinding().getKey()));
-                } else {
-                    nodes.add(new ProcessedNodes(selNode));
-                }
+                // methods are not found using binding key, we need to use the location of the node
+                nodes.add(new ProcessedNodes(selNode));
                 occ = new JavaVariableOccurrence(doc, new ASTNode[] { selNode });
             } else {
                 nodes.add(new ProcessedNodes(((SimpleName) selNode).resolveBinding().getKey()));
@@ -108,7 +105,9 @@ public class SwitchParametersTask extends ImportOrganizerTask {
             if (node.isBinding()) {
                 astNode = reParsedCu.findDeclaringNode(node.getBindingKey());
             } else {
-                astNode = NodeFinder.perform(reParsedCu, node.getRange().getOffset(), 1);
+                // find the center of the node, in case it has been moved a bit
+                int startOffset = node.getRange().getOffset() + Math.round(node.getRange().getLength() / 2);
+                astNode = NodeFinder.perform(reParsedCu, startOffset, 1);
                 if (astNode != null && astNode.getNodeType() == ASTNode.SIMPLE_NAME) {
                     if (!JavaEditorUtils.isMethodSupported(((SimpleName) astNode).getFullyQualifiedName())) {
                         return;
