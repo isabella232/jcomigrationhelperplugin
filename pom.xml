@@ -18,6 +18,7 @@
 		<module>com.sap.ims.isa.jcomigrationhelper</module>
 		<module>com.sap.ims.isa.jcomigrationhelper.tests</module>
 		<module>com.sap.ims.isa.jcomigrationhelper.feature</module>
+		<module>com.sap.ims.isa.jcomigrationhelper.updatesite</module>
 	</modules>
 
 </project>
