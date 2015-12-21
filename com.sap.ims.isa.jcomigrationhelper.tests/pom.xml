@@ -21,7 +21,8 @@
         <configuration>
           <useUIHarness>false</useUIHarness>
           <useUIThread>true</useUIThread>
-          <argLine>--launcher.suppressErrors</argLine>
+          <argLine>-Xms40m -Xmx512m</argLine>
+          <appArgLine>--launcher.suppressErrors</appArgLine>
         </configuration>
       </plugin>
     </plugins>
