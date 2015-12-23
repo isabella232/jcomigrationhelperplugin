@@ -145,6 +145,7 @@ public class JavaEditorUtils {
     public static boolean isMethodSupported(String methodName) {
         switch (methodName) {
             case "getImportParameterList": //$NON-NLS-1$
+            case "getExportParameterList": //$NON-NLS-1$
             case "getStructure": //$NON-NLS-1$
             case "getTable": //$NON-NLS-1$
                 return true;

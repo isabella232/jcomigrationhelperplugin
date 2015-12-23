@@ -29,6 +29,12 @@ public class JCoMixsetValues {
 			importParams2.setValue("NAME_1", "value_1");
 			importParams2.setValue("NAME_2", "value_2");
 
+			JCoParameterList exportParams = variantReadData.getExportParameterList();
+			
+			// setting the id of the attribute set
+			exportParams.setValue("NAME_1", "value_1");
+			exportParams.setValue("NAME_2", "value_2");
+
 			variantReadData.getImportParameterList().setValue("NAME_1", "value_1");
 			
 			// call the function

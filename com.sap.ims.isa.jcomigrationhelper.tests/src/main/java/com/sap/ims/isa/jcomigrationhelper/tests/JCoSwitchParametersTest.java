@@ -91,7 +91,8 @@ public class JCoSwitchParametersTest extends TestsSuiteParent {
         markerFilter.addMarckerCheck(
                 new MarkerCheck(MarkerTypes.MARKER.getType(), 562, 574, 18),
                 new MarkerCheck(MarkerTypes.MARKER.getType(), 814, 827, 26),
-                new MarkerCheck(MarkerTypes.MARKER.getType(), 1040, 1062, 32)
+                new MarkerCheck(MarkerTypes.MARKER.getType(), 1041, 1053, 32),
+                new MarkerCheck(MarkerTypes.MARKER.getType(), 1264, 1286, 38)
                 );
         this.generateMarkersAndSwitchParameters(testClassName, markerFilter);
     }
