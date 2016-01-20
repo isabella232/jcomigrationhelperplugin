@@ -10,7 +10,7 @@ The plugin JCo 3 Migration Helper Plugin is an eclipse/NetWeaver Studio plugin w
 ## Prerequisites
 
 * Java 8
-* Eclipse 3.5 (Galileo) or NWDS
+* Eclipse Mars or NWDS 
 
 # Installation
 
