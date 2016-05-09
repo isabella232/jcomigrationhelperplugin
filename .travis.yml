@@ -5,8 +5,8 @@ env:
   global:
   - DISPLAY=:99.0
 before_deploy:
-  - "mvn -DskipTests package"
-  - export BUILD_RES=$(ls target/com.sap.ims.isa.jcomigrationhelper.updatesite-*.zip)
+  - export BUILD_RES=$(ls target/*.zip)
+  - echo "deploying $BUILD_RES to GitHub releases"
 deploy:
   provider: releases
   api_key:
