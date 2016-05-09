@@ -11,6 +11,28 @@
   </parent>
 
   <artifactId>com.sap.ims.isa.jcomigrationhelper.updatesite</artifactId>
-  <packaging>eclipse-update-site</packaging>
+  <packaging>eclipse-repository</packaging>
 
+  <build>
+  <pluginManagement>
+	<plugins>
+	<plugin>
+	  <groupId>org.apache.maven.plugins</groupId>
+	  <artifactId>maven-assembly-plugin</artifactId>
+	  <configuration>
+		<descriptor>src/assembly/bin.xml</descriptor>
+		<finalName>site_install_archive-${project.version}</finalName>
+	  </configuration>
+	  <executions>
+		<execution>
+		  <phase>package</phase>
+		  <goals>
+			<goal>single</goal>
+		  </goals>
+		</execution>
+	  </executions>
+	</plugin>
+	</plugins>
+  </pluginManagement>
+  </build>
 </project>
