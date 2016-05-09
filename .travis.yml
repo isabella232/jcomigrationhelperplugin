@@ -5,7 +5,9 @@ env:
   global:
   - DISPLAY=:99.0
 before_deploy:
-  - export BUILD_RES=$(ls com.sap.ims.isa.jcomigrationhelper.updatesite/target/com.sap.ims.isa.jcomigrationhelper.updatesite-*.zip)
+  - echo pwd
+  - ls -l ./
+  - export BUILD_RES=$(ls ./com.sap.ims.isa.jcomigrationhelper.updatesite/target/com.sap.ims.isa.jcomigrationhelper.updatesite-*.zip)
   - echo "deploying $BUILD_RES to GitHub releases"
 deploy:
   provider: releases
