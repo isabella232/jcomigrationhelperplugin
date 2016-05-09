@@ -5,6 +5,7 @@ env:
   global:
   - DISPLAY=:99.0
 before_deploy:
+  - mvn clean install -DskipTests=true
   - ls -l ./com.sap.ims.isa.jcomigrationhelper.updatesite/
   - export BUILD_RES=$(ls ./com.sap.ims.isa.jcomigrationhelper.updatesite/target/*.zip)
   - echo "deploying $BUILD_RES to GitHub releases"
