@@ -1,10 +1,16 @@
- language: java
- jdk:
-  - oraclejdk8
- env:  
-  global:  
-   - DISPLAY=:99.0  
-before_install:  
-  - sh -e /etc/init.d/xvfb start - sleep 10  
- script:    
-  - mvn clean install verify   
+language: java
+jdk:
+- oraclejdk8
+env:
+  global:
+  - DISPLAY=:99.0
+before_deploy:
+  - "mvn -DskipTests package"
+  - export BUILD_RES=$(ls target/com.sap.ims.isa.jcomigrationhelper.updatesite-*.zip)
+deploy:
+  provider: releases
+  api_key:
+    secure: MCPu6+qGV+V2Nba67qCb39N530NGzg4UgJohtDkLcJTeDVrh6H9xkpCKJHyWaU2wDa2uoogYlEAt2d/T+NvWaGGlIdCQzIFLUaNTFVkoeaxYViAgd1raxi3erPUDTZkhmB+uTP7dzyMTHPvKRQcmM0rrD+RUE7uaLVX/THEnNp8lkA5pqeh0N3nj3vCUdu6kVTuYHQ+v52YFMP0GdnWI0BN0zpTHiI2DzWT0dEqsS7BKqIAQc8HMQlhedR1eXNOBGK+AHMn/JRi5YrYYbYwEcAngSiLq6cBjlGZav1Q4zYfbC06cJQ6PqiSIW6vVTvTkpMhhduHiiJi8GV3JWkSYkMfcnebwoeCawZYMapn+az/Cgc3xOJqkwIiV5FpvVOfaHha4gKLX3TIdWfs0lx0JFNlY9KVYrhrlWPByTGBXZLFaglhtu35N4HXNxXyMn8CiqOMWFOrdtWgvZpZ9nzLj6eKYELqEixlZ+LWepI0D53d63nqt3fpqBJ+5bPupnfbSxyJGcrXnl7VV8PN3LwJ5i7fF8LijP+/DH12P+KMzE1CZ+uMvXFw1245AMm7fTOnWeQlqAVv7Fn9l4yhUzK0ip8U3c/sbGqJYL9pkMU8E0f4LDYOy+OoI5uZT7kHPoemQ7Hl3qgBXW7LxCk1rzViyGF/1pdI0mIF7srXj8H1a7L8=
+  file: "${BUILD_RES}"
+  on:
+    repo: SAP/jcomigrationhelperplugin
