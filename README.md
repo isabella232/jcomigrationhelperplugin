@@ -16,7 +16,7 @@ The plugin JCo 3 Migration Helper Plugin is an eclipse/NetWeaver Studio plugin w
 
 # Installation
 
-Use the update site from **MISSING NOT AVAILABLE YET** to install the plugin.
+Use the update site from https://github.com/SAP/jcomigrationhelperplugin/wiki/latest_release/ to install the plugin.
 
 # How to use it
 
