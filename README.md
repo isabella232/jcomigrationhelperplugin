@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/SAP/jcomigrationhelperplugin.svg?branch=master)](https://travis-ci.org/SAP/jcomigrationhelperplugin)
+[![REUSE status](https://api.reuse.software/badge/github.com/SAP/jcomigrationhelperplugin)](https://api.reuse.software/info/github.com/SAP/jcomigrationhelperplugin)
 
 # JCo Migration Helper Plugin
 The plugin JCo 3 Migration Helper Plugin is an eclipse/NetWeaver Studio plugin which helps developers to adapt the API changes from the Java Connector.
